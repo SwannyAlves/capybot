@@ -11,18 +11,22 @@
     "Letícia Alexandre",
     "Carolina de Moraes"
   ],
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node src/bot.js",
-    "dev": "node --watch src/bot.js",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
-    "quality": "npm run lint && npm run format:check"
+    "build": "tsc",
+    "start": "node dist/bot.js",
+    "dev": "tsx watch src/bot.ts",
+    "dev:node": "node --loader ts-node/esm --watch src/bot.ts",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "quality": "npm run lint && npm run format:check && npm run build",
+    "clean": "rm -rf dist"
   },
   "lint-staged": {
-    "src/**/*.js": [
+    "src/**/*.ts": [
       "eslint --fix",
       "prettier --write"
     ],
@@ -38,6 +42,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@types/node": "^24.1.0",
+    "@types/sharp": "^0.32.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
     "dotenv": "^17.2.0",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.8",
@@ -45,6 +53,9 @@
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }
