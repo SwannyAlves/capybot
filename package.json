@@ -1,0 +1,27 @@
+{
+  "name": "capybot",
+  "version": "1.0.0",
+  "description": "Capybot is a whatsapp bot that can be used to create stickers and share them with users.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "capybot",
+    "whatsapp bot",
+    "bot"
+  ],
+  "authors": [
+    "Letícia Alexandre",
+    "Carolina de Moraes"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.32.6"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.0"
+  }
+}
