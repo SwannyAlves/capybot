@@ -2,10 +2,6 @@
   "name": "capybot",
   "version": "1.0.0",
   "description": "Capybot is a whatsapp bot that can be used to create stickers and share them with users.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [
     "capybot",
     "whatsapp bot",
@@ -15,6 +11,25 @@
     "Letícia Alexandre",
     "Carolina de Moraes"
   ],
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node --watch src/bot.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
+    "quality": "npm run lint && npm run format:check"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
   "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
@@ -22,6 +37,14 @@
     "sharp": "^0.32.6"
   },
   "devDependencies": {
-    "dotenv": "^17.2.0"
+    "@eslint/js": "^9.31.0",
+    "dotenv": "^17.2.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2"
   }
 }

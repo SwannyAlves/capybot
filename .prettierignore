@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# WhatsApp session
+auth_info/
+
+# Temporary files
+temp/
+
+# Logs
+*.log
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.*
