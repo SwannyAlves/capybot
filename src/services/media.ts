@@ -1,6 +1,7 @@
 import { WAMessage, downloadMediaMessage } from '@whiskeysockets/baileys';
 import fs from 'fs';
 import path from 'path';
+import P from 'pino';
 
 export const downloadMedia = async (msg: WAMessage): Promise<Buffer> => {
   try {
@@ -15,7 +16,7 @@ export const downloadMedia = async (msg: WAMessage): Promise<Buffer> => {
       'buffer',
       {},
       {
-        logger: console,
+        logger: P({ level: 'info' }),
         reuploadRequest: async () => {
           throw new Error('Reupload error');
         },
