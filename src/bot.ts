@@ -2,9 +2,11 @@ import {
   fetchLatestBaileysVersion,
   makeWASocket,
   useMultiFileAuthState,
+  DisconnectReason,
 } from '@whiskeysockets/baileys';
 import P from 'pino';
 import qrcode from 'qrcode-terminal';
+import { handleMessage } from './handlers/message';
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState('auth_info');
@@ -28,33 +30,23 @@ async function startBot() {
     }
 
     if (connection === 'open') {
-      console.log('Connected to WhatsApp!');
-      return;
+      console.log('✅ CapyBot connected successfully!');
+      console.log('🎉 Send a message to test!');
     }
 
     if (connection === 'close') {
-      //  const shouldReconnect = (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut
-      //   if (shouldReconnect) startBot()
-
-      console.log('lastDisconnect', lastDisconnect);
-      console.log('connection', connection);
+      const shouldReconnect =
+        (lastDisconnect?.error as any)?.output?.statusCode !==
+        DisconnectReason.loggedOut;
+      if (shouldReconnect) startBot();
+      console.log('❌ Connection closed:', lastDisconnect);
     }
   });
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
-
-    if (msg && !msg.key.fromMe && msg.message?.conversation) {
-      const sender = msg.key.remoteJid as string;
-      const text = msg.message.conversation.toLowerCase();
-
-      console.log(`📩 Message from ${sender}: ${text}`);
-
-      if (text === 'hi') {
-        await sock.sendMessage(sender, {
-          text: 'Hello! How can I help you today?',
-        });
-      }
+    if (msg && !msg.key.fromMe) {
+      await handleMessage(sock, msg);
     }
   });
 }
