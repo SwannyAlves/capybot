@@ -7,7 +7,7 @@ export const downloadMedia = async (msg: WAMessage): Promise<Buffer> => {
   try {
     console.log('⬇️ Downloading media...');
 
-    if (!msg.message?.imageMessage) {
+    if (!msg.message?.imageMessage && !msg.message?.videoMessage) {
       throw new Error('Media not found');
     }
 
@@ -29,35 +29,9 @@ export const downloadMedia = async (msg: WAMessage): Promise<Buffer> => {
 
     console.log(`✅ Media downloaded: ${buffer.length} bytes`);
     return buffer as Buffer;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error downloading media:', error);
     throw new Error(`Media download failed: ${error.message}`);
-  }
-};
-
-export const downloadMediaToFile = async (
-  msg: WAMessage,
-  tempDir: string = './temp'
-): Promise<string> => {
-  try {
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    const buffer = await downloadMedia(msg);
-
-    const timestamp = Date.now();
-    const messageId = msg.key.id || 'unknown';
-    const fileName = `image_${messageId}_${timestamp}.jpg`;
-    const filePath = path.join(tempDir, fileName);
-
-    fs.writeFileSync(filePath, buffer);
-    console.log(`💾 Temporary file saved: ${filePath}`);
-
-    return filePath;
-  } catch (error) {
-    console.error('❌ Error saving media:', error);
-    throw error;
   }
 };
 
@@ -99,5 +73,5 @@ export const getMediaType = (
 
 export const isSupportedForSticker = (msg: WAMessage): boolean => {
   const mediaType = getMediaType(msg);
-  return mediaType === 'image';
+  return mediaType === 'image' || mediaType === 'video';
 };

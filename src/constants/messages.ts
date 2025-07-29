@@ -1,3 +1,4 @@
+import { VIDEO_STICKER_CONFIG } from '../constants/config';
 export const HELP_MESSAGE = `🤖 *CapyBot - Ajuda*
 
 📸 *Como usar:*
@@ -24,3 +25,17 @@ export const UNSUPPORTED_MESSAGE =
 
 export const PROCESSING_MESSAGE =
   '🎨 Processando sua imagem... Aguarde um momento!';
+
+export const ERROR_UNSUPPORTED_VIDEO_MESSAGE =
+  '❌ Formato de vídeo não suportado.\n\nFormatos aceitos: MP4, MOV, AVI, WebM';
+
+export const ERROR_MAX_DURATION_VIDEO_MESSAGE = `⏰ Vídeo muito longo!
+
+📏 *Duração atual:* ${VIDEO_STICKER_CONFIG.maxDuration}s
+⚡ *Máximo aceito:* 10s
+
+✂️ *Dica:* Corte seu vídeo para 10 segundos ou menos e envie novamente.`;
+
+export const PROCESSING_VIDEO_MESSAGE = `🎬 Processando vídeo para GIF animado...\n\n⏳ Isso pode levar 30-60 segundos, aguarde!`;
+
+export const ERROR_VIDEO_MESSAGE = `😅 Ops! Erro ao processar seu vídeo.\n\n💡 *Dicas:*\n• Vídeos até 10 segundos\n• Formatos: MP4, MOV\n• Tamanho máximo: 50MB\n\nTente novamente! 🎯`;
