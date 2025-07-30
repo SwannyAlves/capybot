@@ -3,36 +3,82 @@ import fs from 'fs';
 import path from 'path';
 import { VIDEO_STICKER_CONFIG } from '../constants/config';
 
-export const processVideoToAnimatedSticker = async (
-  videoPath: string,
-  outputPath?: string
-): Promise<Buffer> => {
+const SQUARE_TOLERANCE = 0.1;
+
+export const processVideoToAnimatedStickers = async (
+  videoPath: string
+): Promise<{ square?: Buffer; original?: Buffer }> => {
   const tempDir = path.resolve('./temp');
   const timestamp = Date.now();
-  const tempOutputPath =
-    outputPath || path.resolve(tempDir, `sticker_${timestamp}.webp`);
+
+  const squareOutputPath = path.resolve(
+    tempDir,
+    `sticker_square_${timestamp}.webp`
+  );
+  const originalOutputPath = path.resolve(
+    tempDir,
+    `sticker_original_${timestamp}.webp`
+  );
 
   try {
-    console.log('🎬 Starting video processing...');
-    console.log(`📁 Input: ${path.resolve(videoPath)}`);
-    console.log(`📁 Output: ${tempOutputPath}`);
+    console.log('🎬 Starting video processing for both formats...');
 
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    await validateVideoForSticker(videoPath);
+    const videoInfo = await validateVideoForSticker(videoPath);
+    const aspectRatio = videoInfo.width / videoInfo.height;
+    const isSquare = Math.abs(aspectRatio - 1) <= SQUARE_TOLERANCE;
 
-    await processVideoWithFFmpeg(path.resolve(videoPath), tempOutputPath);
+    if (isSquare) {
+      console.log('🔲 Video is already square, creating single sticker...');
+      const squareOutputPath = path.resolve(
+        tempDir,
+        `sticker_${timestamp}.webp`
+      );
 
-    const stickerBuffer = fs.readFileSync(tempOutputPath);
+      await processVideoWithFFmpeg(videoPath, squareOutputPath, 'square');
+      const squareBuffer = fs.readFileSync(squareOutputPath);
 
-    if (fs.existsSync(tempOutputPath)) {
-      fs.unlinkSync(tempOutputPath);
+      if (fs.existsSync(squareOutputPath)) {
+        fs.unlinkSync(squareOutputPath);
+      }
+
+      console.log(`✅ Single sticker created: ${squareBuffer.length} bytes`);
+
+      return {
+        square: squareBuffer,
+      };
     }
 
-    console.log(`✅ Animated sticker created: ${stickerBuffer.length} bytes`);
-    return stickerBuffer;
+    // Process square sticker (512x512)
+    console.log('🔲 Processing square sticker...');
+    await processVideoWithFFmpeg(videoPath, squareOutputPath, 'square');
+
+    // Process original format sticker
+    console.log('📐 Processing original format sticker...');
+    await processVideoWithFFmpeg(videoPath, originalOutputPath, 'original');
+
+    const squareBuffer = fs.readFileSync(squareOutputPath);
+    const originalBuffer = fs.readFileSync(originalOutputPath);
+
+    // Clean temporary files
+    if (fs.existsSync(squareOutputPath)) {
+      fs.unlinkSync(squareOutputPath);
+    }
+    if (fs.existsSync(originalOutputPath)) {
+      fs.unlinkSync(originalOutputPath);
+    }
+
+    console.log(
+      `✅ Both stickers created: Square ${squareBuffer.length} bytes, Original ${originalBuffer.length} bytes`
+    );
+
+    return {
+      square: squareBuffer,
+      original: originalBuffer,
+    };
   } catch (error: any) {
     console.error('❌ Error processing video:', error);
     throw new Error(`Video processing failed: ${error?.message}`);
@@ -41,42 +87,65 @@ export const processVideoToAnimatedSticker = async (
 
 const processVideoWithFFmpeg = (
   inputPath: string,
-  outputPath: string
+  outputPath: string,
+  format: 'square' | 'original'
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
+    console.log(`🔍 Processing ${format} format...`);
+
+    let videoFilter: string;
+
+    if (format === 'square') {
+      // Square format, cropping to 1:1 aspect ratio
+      videoFilter =
+        'scale=512:512:force_original_aspect_ratio=increase,crop=512:512';
+    } else {
+      // Original format, just resize keeping proportion (max 512px)
+      videoFilter = 'scale=512:512:force_original_aspect_ratio=decrease';
+    }
+
     ffmpeg(inputPath)
       .fps(VIDEO_STICKER_CONFIG.fps)
       .duration(VIDEO_STICKER_CONFIG.maxDuration)
       .outputOptions([
         '-c:v libwebp_anim',
-        '-vf scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black',
-        '-loop 0', // Infinite loop
+        `-vf ${videoFilter}`,
+        '-loop 0',
         '-compression_level 4',
-        '-an', // Remove audio
+        '-an',
         '-preset default',
-        '-quality 75', // Quality (0-100, lower = better quality)
+        '-quality 75',
       ])
       .output(outputPath)
       .format('webp')
       .on('start', (commandLine: string) => {
-        console.log('🔄 FFmpeg command:', commandLine);
+        console.log(`🔄 FFmpeg ${format}:`, commandLine);
       })
       .on('progress', (progress: any) => {
-        console.log(`📊 Progress: ${Math.round(progress.percent || 0)}%`);
+        console.log(
+          `📊 ${format} progress: ${Math.round(progress.percent || 0)}%`
+        );
       })
       .on('end', () => {
-        console.log('✅ FFmpeg processing completed');
+        console.log(`✅ ${format} sticker completed`);
         resolve();
       })
       .on('error', (error: any) => {
-        console.error('❌ FFmpeg error:', error);
+        console.error(`❌ FFmpeg ${format} error:`, error);
         reject(error);
       })
       .run();
   });
 };
 
-const validateVideoForSticker = async (videoPath: string): Promise<void> => {
+const validateVideoForSticker = async (
+  videoPath: string
+): Promise<{
+  width: number;
+  height: number;
+  duration: number;
+  fileSize: number;
+}> => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(videoPath, (error, metadata) => {
       if (error) {
@@ -109,10 +178,19 @@ const validateVideoForSticker = async (videoPath: string): Promise<void> => {
         return;
       }
 
+      const width = videoStream.width ?? 0;
+      const height = videoStream.height ?? 0;
+
       console.log(
-        ` Video valid: ${duration}s, ${Math.round(fileSize / 1024)}KB`
+        `📐 Video valid: ${width}x${height}, ${duration}s, ${Math.round(fileSize / 1024)}KB`
       );
-      resolve();
+
+      resolve({
+        width,
+        height,
+        duration,
+        fileSize,
+      });
     });
   });
 };

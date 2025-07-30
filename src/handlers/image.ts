@@ -38,14 +38,22 @@ export const handleImage = async (
     console.log('🎨 Converting to sticker...');
     const stickerBuffer = await processImageToSticker(imageBuffer);
 
-    await sock.sendMessage(sender, {
-      sticker: stickerBuffer,
-    });
+    if (stickerBuffer.square) {
+      await sock.sendMessage(sender, {
+        sticker: stickerBuffer.square,
+      });
+    }
+
+    if (stickerBuffer.original) {
+      await sock.sendMessage(sender, {
+        sticker: stickerBuffer.original,
+      });
+    }
 
     console.log('✅ Sticker sent successfully!');
 
     cleanTempFiles();
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error processing image:', error);
     await sock.sendMessage(sender, {
       text: ERROR_MESSAGE,

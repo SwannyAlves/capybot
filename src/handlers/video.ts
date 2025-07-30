@@ -1,7 +1,7 @@
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { downloadMedia } from '../services/media';
 import {
-  processVideoToAnimatedSticker,
+  processVideoToAnimatedStickers,
   isVideoFile,
   estimateStickerSize,
 } from '../services/video';
@@ -65,11 +65,19 @@ export const handleVideo = async (
       );
 
       console.log('🎨 Converting to GIF...');
-      const stickerBuffer = await processVideoToAnimatedSticker(videoPath);
+      const stickerBuffer = await processVideoToAnimatedStickers(videoPath);
 
-      await sock.sendMessage(sender, {
-        sticker: stickerBuffer,
-      });
+      if (stickerBuffer.square) {
+        await sock.sendMessage(sender, {
+          sticker: stickerBuffer.square,
+        });
+      }
+
+      if (stickerBuffer.original) {
+        await sock.sendMessage(sender, {
+          sticker: stickerBuffer.original,
+        });
+      }
 
       console.log('✅ Animated sticker sent successfully!');
     } finally {
@@ -78,7 +86,7 @@ export const handleVideo = async (
         console.log(`🗑️ Temporary files removed: ${videoPath}`);
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ An error occurred while processing the video :', error);
 
     await sock.sendMessage(sender, {
