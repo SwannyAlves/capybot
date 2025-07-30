@@ -7,13 +7,15 @@ export const processVideoToAnimatedSticker = async (
   videoPath: string,
   outputPath?: string
 ): Promise<Buffer> => {
-  const tempDir = './temp';
+  const tempDir = path.resolve('./temp');
   const timestamp = Date.now();
   const tempOutputPath =
-    outputPath || path.join(tempDir, `sticker_${timestamp}.webp`);
+    outputPath || path.resolve(tempDir, `sticker_${timestamp}.webp`);
 
   try {
     console.log('🎬 Starting video processing...');
+    console.log(`📁 Input: ${path.resolve(videoPath)}`);
+    console.log(`📁 Output: ${tempOutputPath}`);
 
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
@@ -21,7 +23,7 @@ export const processVideoToAnimatedSticker = async (
 
     await validateVideoForSticker(videoPath);
 
-    await processVideoWithFFmpeg(videoPath, tempOutputPath);
+    await processVideoWithFFmpeg(path.resolve(videoPath), tempOutputPath);
 
     const stickerBuffer = fs.readFileSync(tempOutputPath);
 
@@ -43,28 +45,21 @@ const processVideoWithFFmpeg = (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
-      .size('512x512')
-      .aspect('1:1')
-      .autopad(true, 'black')
-
       .fps(VIDEO_STICKER_CONFIG.fps)
       .duration(VIDEO_STICKER_CONFIG.maxDuration)
-
       .outputOptions([
-        '-vcodec libwebp',
-        '-vf scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2',
+        '-c:v libwebp_anim',
+        '-vf scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black',
         '-loop 0', // Infinite loop
+        '-compression_level 4',
+        '-an', // Remove audio
         '-preset default',
-        '-an', // No audio
-        '-vsync 0',
-        '-q:v 75', // Quality (0-100, lower = better quality)
+        '-quality 75', // Quality (0-100, lower = better quality)
       ])
       .output(outputPath)
       .format('webp')
-
-      // Event handlers
       .on('start', (commandLine: string) => {
-        console.log('🔄 FFmpeg started:', commandLine);
+        console.log('🔄 FFmpeg command:', commandLine);
       })
       .on('progress', (progress: any) => {
         console.log(`📊 Progress: ${Math.round(progress.percent || 0)}%`);
@@ -137,7 +132,7 @@ export const optimizeVideoForProcessing = async (
       .outputOptions([
         '-preset fast',
         '-crf 28',
-        '-an', // Remove áudio
+        '-an', // Remove audio
       ])
 
       .output(outputPath)

@@ -48,9 +48,9 @@ export const handleVideo = async (
     console.log('⬇️ Downloading video...');
     const videoBuffer = await downloadMedia(msg);
 
-    const tempDir = './temp';
+    const tempDir = path.resolve('./temp');
     const timestamp = Date.now();
-    const videoPath = path.join(tempDir, `video_${timestamp}.mp4`);
+    const videoPath = path.resolve(tempDir, `video_${timestamp}.mp4`);
 
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
