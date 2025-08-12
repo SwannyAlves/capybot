@@ -108,7 +108,7 @@ npm run dev
    - Scan the QR code displayed in your terminal
 3. **Wait for connection** - you should see "✅ CapyBot connected successfully!" in your terminal
 
-## Project Structure 📁
+## Project Structure
 
 ```
 capybot/
@@ -208,7 +208,7 @@ This project uses:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Authors 👥
+## Authors
 
 - [Letícia Alexandre](https://github.com/leticiafrontend)
 - [Carolina de Moraes](https://github.com/CarolinaMoraes)
