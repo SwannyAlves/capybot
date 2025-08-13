@@ -11,7 +11,7 @@
     "Letícia Alexandre",
     "Carolina de Moraes"
   ],
-  "type": "module",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
